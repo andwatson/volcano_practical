@@ -3,3 +3,6 @@ numpy
 scipy
 seaborn
 pandas
+osgeo
+pyproj
+gstools
