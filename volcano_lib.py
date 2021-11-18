@@ -11,7 +11,7 @@ import subprocess as subp
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as path
-from osgeo import gdal
+import warnings
 
 #-------------------------------------------------------------------------------
 
@@ -180,8 +180,10 @@ def profile_data(x,y,data,prof_start,prof_end,params):
         poly_points = poly.contains_points(np.transpose([trim_xx,trim_yy]))
                             
         in_poly_vals = trim_data[poly_points]
-
-        bin_val[ii] = np.nanmean(in_poly_vals)
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            bin_val[ii] = np.nanmean(in_poly_vals)
     
     # get point cloud
     poly_x = np.array([bin_x1[0], bin_x1[-1], bin_x2[-1], bin_x2[0]])
