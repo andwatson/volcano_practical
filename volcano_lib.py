@@ -64,19 +64,77 @@ def mogi_source(x,y,xcen=0,ycen=0,d=3e3,dV=1e6, nu=0.25):
     
     return ux, uy, uz
 
+#-------------------------------------------------------------------------------
+
+def mogi_source_topo(x, y, elev, xcen=0, ycen=0, d=3e3, dV=1e6, nu=0.25):
+    
+    '''
+    Based on the Mogi source provided by Scott Henderson at:
+    https://github.com/scottyhq/cov9/blob/master/mogi.py
+    
+    Includes an adjustment for topography above the source.
+    Elevations are measured above sea level, source depth is measured below sea level.
+    
+    Original Mogi source from:
+    Mogi 1958, Segall 2010 p.203
+    
+    INPUTS:
+        x = x-coordinate grid (m)
+        y = y-coordinate grid (m)
+        
+        xcen = y-offset of point source epicenter (m) (default = 0)
+        ycen = y-offset of point source epicenter (m) (default = 0)
+        d = depth to point (m) (default = 3e3)
+        dV = change in volume (m^3) (default = 1e6)
+        nu = poisson's ratio for medium (default = 0.25)
+        
+        elev = array of elevations, same size as x and y (m)
+        
+    OUTPUTS:
+        ux = displacement in x-direction at each point in (x,y)
+        uy = displacement in y-direction at each point in (x,y)
+        uz = displacement in z-direction at each point in (x,y)
+    
+    '''
+    
+    # Centre coordinate grid on point source
+    x = x - xcen
+    y = y - ycen
+    
+    # Convert to surface cylindrical coordinates
+    th, rho = cart2pol(x,y)
+    R = np.hypot(d+elev,rho)
+    
+    # Mogi displacement calculation
+    C = ((1-nu) / np.pi) * dV
+    ur = C * rho / R**3
+    uz = C * d / R**3
+    
+    # Convert back to cartesian coordinates
+    ux, uy = pol2cart(th, ur)
+    
+    # reshape to input grid size
+    ux = ux.reshape(x.shape)
+    uy = uy.reshape(x.shape)
+    uz = uz.reshape(x.shape)
+    
+    return ux, uy, uz
+
+#-------------------------------------------------------------------------------
 
 def cart2pol(x1,x2):
     '''
-    Conversion for cartesian (x,y) to polar coordinates.
+    Conversion for cartesian (x,y) to polar coordinates (for mogi model).
     '''
     theta = np.arctan2(x2,x1)
     r = np.hypot(x2,x1)
     return theta, r
 
+#-------------------------------------------------------------------------------
 
 def pol2cart(theta,r):
     '''
-    Conversion from polar coordinates to cartesian.
+    Conversion from polar coordinates to cartesian (for mogi model).
     '''
     x1 = r * np.cos(theta)
     x2 = r * np.sin(theta)
