@@ -11,6 +11,8 @@ import subprocess as subp
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as path
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from cmcrameri import cm
 import warnings
 
 #-------------------------------------------------------------------------------
@@ -140,39 +142,6 @@ def pol2cart(theta,r):
     x2 = r * np.sin(theta)
     return x1,x2
     
-    
-#-------------------------------------------------------------------------------
-
-def load_geotif(file_name):
-    '''
-    Loads a geotif file using gdal and calculate the x and y coordinates.
-    
-    INPUTS:
-        fie_name = path to file (str)
-    
-    OUTPUTS:
-        data = numpy array of geotif content
-        x = vector of x-coords
-        y = vector of y-coords
-    '''
-    
-    # open tif
-    geotiff = gdal.Open(file_name)
-    
-    # read to numpy array
-    data = geotiff.ReadAsArray()
-    
-    # calculate x and y corners
-    ulx, xres, xskew, uly, yskew, yres  = geotiff.GetGeoTransform()
-    lrx = ulx + (geotiff.RasterXSize * xres)
-    lry = uly + (geotiff.RasterYSize * yres)
-    
-    # create coord vectors
-    x = np.arange(ulx, lrx+xres, xres)
-    y = np.arange(lry, uly+yres, yres)
-    
-    return data, x, y
-    
 #-------------------------------------------------------------------------------
 
 def profile_data(x,y,data,prof_start,prof_end,params):
@@ -262,3 +231,121 @@ def profile_data(x,y,data,prof_start,prof_end,params):
     points_dist = points2prof_start * np.cos(points_prof_angle)
     
     return bin_val, prof_bin_mids, points_val, points_dist, points_poly
+
+
+#-------------------------------------------------------------------------------
+
+def plot_comparison(ulos_asc, disp_asc, ulos_desc, disp_desc, xcen, ycen, extents, clim):
+    
+    '''
+    Generates a plot comparing modelled, observed, and residual displacements for two frames.
+    Currently the frame names are hard-coded.
+    
+    INPUTS:
+        ulos_asc = ascending model
+        disp_asc = ascending observations
+        ulos_desc = descending model
+        disp_desc = descending observations
+        xcen = x coord of mogi centre
+        ycen = y coord of mogi centre
+        extents = extents of displacement files [xmin, xmax, ymin, ymax]
+        clim = colour limits for model and observed
+    '''
+
+    # plot model, data, and residual
+    fig, axs = plt.subplots(2,3,figsize=(20,17))
+    fig.tight_layout(h_pad=10, w_pad = 10)
+
+    # ascending model
+    im = axs[0,0].imshow(ulos_asc, extent=extents, vmin=clim[0], vmax=clim[1], cmap=cm.batlow)
+    axs[0,0].scatter(xcen, ycen, color='red')
+    divider = make_axes_locatable(axs[0,0])
+    cax = divider.append_axes("right", size="5%", pad="5%")
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_label(label='Line-of-sight displacement (mm)', fontsize=18)
+    cbar.ax.tick_params(labelsize=16)
+    axs[0,0].set_title('Model displacement', fontsize=20)
+    axs[0,0].set_xlabel('x-coord (km)', fontsize=18)
+    axs[0,0].set_ylabel('y-coord (km)', fontsize=18)
+    axs[0,0].tick_params(labelsize=16)
+    axs[0,0].set_xlim(extents[0], extents[1])
+    axs[0,0].set_ylim(extents[2], extents[3])
+    axs[0,0].annotate('018A_12668_131313', xy=(0, 0.5), xytext=(-axs[0,0].yaxis.labelpad - 40, 0),
+                    xycoords=axs[0,0].yaxis.label, textcoords='offset points',
+                    fontsize=20, ha='left', va='center', rotation=90, weight='bold')
+
+    # ascending data
+    im = axs[0,1].imshow(disp_asc, extent=extents, vmin=clim[0], vmax=clim[1], cmap=cm.batlow)
+    axs[0,1].scatter(xcen, ycen, color='red')
+    divider = make_axes_locatable(axs[0,1])
+    cax = divider.append_axes("right", size="5%", pad="5%")
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_label(label='Line-of-sight displacement (mm)', fontsize=18)
+    cbar.ax.tick_params(labelsize=16)
+    axs[0,1].set_title('Observed displacement', fontsize=20)
+    axs[0,1].set_xlabel('x-coord (km)', fontsize=18)
+    axs[0,1].tick_params(labelsize=16)
+    axs[0,1].set_xlim(extents[0], extents[1])
+    axs[0,1].set_ylim(extents[2], extents[3])
+
+    # asceding residual (observed - model)
+    im = axs[0,2].imshow(disp_asc-ulos_asc, extent=extents, cmap=cm.batlow)
+    axs[0,2].scatter(xcen, ycen, color='red')
+    divider = make_axes_locatable(axs[0,2])
+    cax = divider.append_axes("right", size="5%", pad="5%")
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_label(label='Residual displacement (mm)', fontsize=18)
+    cbar.ax.tick_params(labelsize=16)
+    axs[0,2].set_title('Residual (observed - model)', fontsize=20)
+    axs[0,2].set_xlabel('x-coord (km)', fontsize=18)
+    axs[0,2].tick_params(labelsize=16)
+    axs[0,2].set_xlim(extents[0], extents[1])
+    axs[0,2].set_ylim(extents[2], extents[3])
+
+
+    # descending model
+    im = axs[1,0].imshow(ulos_desc, extent=extents, vmin=clim[0], vmax=clim[1], cmap=cm.batlow)
+    axs[1,0].scatter(xcen, ycen, color='red')
+    divider = make_axes_locatable(axs[1,0])
+    cax = divider.append_axes("right", size="5%", pad="5%")
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_label(label='Line-of-sight displacement (mm)', fontsize=18)
+    cbar.ax.tick_params(labelsize=16)
+    axs[1,0].set_xlabel('x-coord (km)', fontsize=18)
+    axs[1,0].set_ylabel('y-coord (km)', fontsize=18)
+    axs[1,0].tick_params(labelsize=16)
+    axs[1,0].set_xlim(extents[0], extents[1])
+    axs[1,0].set_ylim(extents[2], extents[3])
+    axs[1,0].annotate('083D_12636_131313', xy=(0, 0.5), xytext=(-axs[1,0].yaxis.labelpad - 40, 0),
+                    xycoords=axs[1,0].yaxis.label, textcoords='offset points',
+                    fontsize=20, ha='left', va='center', rotation=90, weight='bold')
+
+    # descending data
+    im = axs[1,1].imshow(disp_desc, extent=extents, vmin=clim[0], vmax=clim[1], cmap=cm.batlow)
+    axs[1,1].scatter(xcen, ycen, color='red')
+    divider = make_axes_locatable(axs[1,1])
+    cax = divider.append_axes("right", size="5%", pad="5%")
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_label(label='Line-of-sight displacement (mm)', fontsize=18)
+    cbar.ax.tick_params(labelsize=16)
+    axs[1,1].set_title('Observed displacement', fontsize=20)
+    axs[1,1].set_xlabel('x-coord (km)', fontsize=18)
+    axs[1,1].tick_params(labelsize=16)
+    axs[1,1].set_xlim(extents[0], extents[1])
+    axs[1,1].set_ylim(extents[2], extents[3])
+
+    # descending residual (observed - model)
+    im = axs[1,2].imshow(disp_desc-ulos_desc, extent=extents, cmap=cm.batlow)
+    axs[1,2].scatter(xcen, ycen, color='red')
+    divider = make_axes_locatable(axs[1,2])
+    cax = divider.append_axes("right", size="5%", pad="5%")
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_label(label='Residual displacement (mm)', fontsize=18)
+    cbar.ax.tick_params(labelsize=16)
+    axs[1,2].set_title('Residual (observed - model)', fontsize=20)
+    axs[1,2].set_xlabel('x-coord (km)', fontsize=18)
+    axs[1,2].tick_params(labelsize=16)
+    axs[1,2].set_xlim(extents[0], extents[1])
+    axs[1,2].set_ylim(extents[2], extents[3])
+
+    plt.show()
