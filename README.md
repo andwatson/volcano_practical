@@ -6,7 +6,7 @@ To launch the practical notebook (use this if you want to run through the practi
 https://mybinder.org/v2/gh/andwatson/volcano_practical/2023?filepath=Volcano_practical.ipynb
 
 To launch the full repo (use this if you want to experiment with the code):
-https://mybinder.org/v2/gh/andwatson/volcano_practical/main
+https://mybinder.org/v2/gh/andwatson/volcano_practical/2023
 
 The practical can also be run locally using Jupyter Notebooks. You'll find the required python packages in `requirements.txt`.
 
