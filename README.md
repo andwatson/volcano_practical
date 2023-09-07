@@ -3,7 +3,7 @@
 Practical exercise on volcanic deformation for the COMET InSAR course.
 
 To launch the practical notebook (use this if you want to run through the practical):
-https://mybinder.org/v2/gh/andwatson/volcano_practical/2023?filepath=Volcano_practical.ipynb
+https://mybinder.org/v2/gh/andwatson/volcano_practical/2023?filepath=Volcano_practical_23.ipynb
 
 To launch the full repo (use this if you want to experiment with the code):
 https://mybinder.org/v2/gh/andwatson/volcano_practical/2023
